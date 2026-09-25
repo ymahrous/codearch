@@ -25,7 +25,6 @@ browser.
 - [Getting started](#getting-started)
 - [Scripts](#scripts)
 - [Configuration](#configuration)
-- [Deployment](#deployment)
 - [API](#api)
 - [Project structure](#project-structure)
 - [Quality standards](#quality-standards)
