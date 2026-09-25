@@ -131,35 +131,6 @@ Every variable is optional. See [`.env.example`](.env.example).
 | `NEXT_PUBLIC_SITE_URL`                    | Vercel domain | Canonical URLs, sitemap and Open Graph                                                                                                                                         |
 | `NEXT_PUBLIC_REPO_URL`                    | placeholder   | Your repository's URL. Used for the "Source code" links and, on every legal page, as the contact point (`/issues`) and security reporting channel. **Set this before launch.** |
 
-## Deployment
-
-### Vercel (recommended)
-
-1. Push the repository to GitHub and choose **Add New → Project** in Vercel. The Next.js preset
-   is detected automatically; no build settings are needed.
-2. Under **Project → Settings → Environment Variables**, set:
-   - `GITHUB_TOKEN`: a fine-grained token with no permissions (public data only).
-   - `NEXT_PUBLIC_REPO_URL`: the URL of your repository.
-   - `NEXT_PUBLIC_SITE_URL`: only when using a custom domain.
-3. Add **Upstash Redis** from the Vercel Marketplace (free tier) and connect it to the project.
-   It sets `KV_REST_API_URL` / `KV_REST_API_TOKEN`, which the app picks up automatically. Without
-   it, each function instance keeps its own cache and rate-limit counters, which reset whenever
-   the instance is recycled. It's also what lets report pages be served to search engines and AI
-   crawlers as full HTML: a report cached by the API is only visible to the page through Redis.
-4. Enable **Web Analytics** under **Project → Analytics** and redeploy. The analytics script only
-   loads for visitors who choose **Allow analytics** in the cookie banner.
-5. On GitHub, turn on **Issues** and **Private vulnerability reporting** (Settings → Security).
-   The legal pages send questions to the issue tracker and security reports to the private form.
-
-`/api/dig` declares `maxDuration = 300`, within the Hobby plan's limit. Typical analyses take
-1–7 seconds, and successful responses are also cached at Vercel's CDN for 5 minutes.
-
-### Any Node.js host
-
-```bash
-npm ci && npm run build && npm start
-```
-
 ## API
 
 Reports are available as JSON:
@@ -266,7 +237,7 @@ situation: they are a starting point, not legal advice.
 
 ## License
 
-Released under the [MIT License](LICENSE). Copyright © 2026 Yousef Mahrous.
+Released under the [MIT License](LICENSE).
 
 Codebase Archaeology is not affiliated with GitHub, GitLab or Codeberg. Repository names and
 content belong to their respective owners.
