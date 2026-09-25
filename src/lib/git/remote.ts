@@ -31,7 +31,7 @@ export class RemoteError extends Error {
   }
 }
 
-const AGENT = "git/2.45.0 codebase-archaeology";
+const AGENT = "git/2.45.0 codearch";
 
 async function readCapped(res: Response, max: number): Promise<Buffer> {
   if (!res.body) return Buffer.from(await res.arrayBuffer());
@@ -51,12 +51,21 @@ async function readCapped(res: Response, max: number): Promise<Buffer> {
   return Buffer.concat(chunks);
 }
 
-export async function readRemoteHistory(
-  cloneUrl: string,
-  opts: RemoteOptions = {},
-): Promise<{ commits: Commit[]; headFiles: string[]; headOid: string; packBytes: number }> {
-  const doFetch = opts.fetch ?? ((i, init) => fetch(i, init));
+type RemoteHistory = { commits: Commit[]; headFiles: string[]; headOid: string; packBytes: number };
+
+export async function readRemoteHistory(cloneUrl: string, opts: RemoteOptions = {}): Promise<RemoteHistory> {
   const signal = AbortSignal.timeout(opts.timeoutMs ?? 60_000);
+  try {
+    return await read(cloneUrl, opts, signal);
+  } catch (e) {
+    // The timeout can also fire while a response body is streaming, outside `call`.
+    if (!(e instanceof RemoteError) && signal.aborted) throw new RemoteError("timeout", "The git host took too long to respond.");
+    throw e;
+  }
+}
+
+async function read(cloneUrl: string, opts: RemoteOptions, signal: AbortSignal): Promise<RemoteHistory> {
+  const doFetch = opts.fetch ?? ((i, init) => fetch(i, init));
   const maxBytes = opts.maxPackBytes ?? 250_000_000;
   const base = cloneUrl.replace(/\/+$/, "");
   const headers = {

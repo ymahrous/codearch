@@ -7,12 +7,21 @@ import { ALLOWED_HOSTS, parseRepoInput } from "@/lib/archaeology/repo-input";
 
 type Props = PageProps<"/[owner]/[repo]">;
 
+/** Decodes a path, or returns null for malformed escapes like a stray "%". */
+function safeDecode(s: string): string | null {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return null;
+  }
+}
+
 async function resolveTarget(props: Props) {
   const { owner, repo } = await props.params;
   const { host } = await props.searchParams;
   const h = typeof host === "string" && (ALLOWED_HOSTS as readonly string[]).includes(host) ? host : "github.com";
   const input = h === "github.com" ? `${owner}/${repo}` : `${h}/${owner}/${repo}`;
-  return { target: parseRepoInput(decodeURIComponent(input)), input };
+  return { target: parseRepoInput(safeDecode(input)), input };
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {

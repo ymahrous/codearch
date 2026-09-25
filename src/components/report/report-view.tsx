@@ -137,6 +137,7 @@ export function ReportView({ report, meta, cached, onRefresh, refreshing }: Repo
 
       {/* On this page */}
       <nav
+        id="report-sections"
         aria-label="Report sections"
         className="sticky top-16 z-20 -mx-4 border-b border-border bg-bg/90 px-4 backdrop-blur sm:mx-0 sm:px-0"
       >

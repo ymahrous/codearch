@@ -23,7 +23,7 @@ export async function githubRepoInfo(
   const doFetch = opts.fetch ?? ((i, init) => fetch(i, init));
   const headers: Record<string, string> = {
     Accept: "application/vnd.github+json",
-    "User-Agent": "codebase-archaeology",
+    "User-Agent": "codearch",
     "X-GitHub-Api-Version": "2022-11-28",
   };
   if (opts.token) headers.Authorization = `Bearer ${opts.token}`;

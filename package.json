@@ -1,5 +1,5 @@
 {
-  "name": "codebase-archaeology",
+  "name": "codearch",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@upstash/redis": "^1.39.0",
+    "@vercel/analytics": "^2.0.1",
     "clsx": "^2.1.1",
     "geist": "^1.7.2",
     "lucide-react": "^1.48.0",
@@ -32,6 +33,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.2",
@@ -53,6 +55,8 @@
     "vitest": "^5.0.2"
   },
   "description": "Explore any public git repository's history: eras, folder ownership, bus factor and the oldest surviving files.",
+  "author": "Yousef Mahrous",
+  "license": "MIT",
   "engines": {
     "node": ">=20.9"
   }

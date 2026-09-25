@@ -10,6 +10,7 @@ import type { Report } from "@/lib/archaeology/types";
 import { cn } from "@/lib/cn";
 
 const MAX_BYTES = 200 * 1024 * 1024;
+const PREVIEW_CHARS = 20000;
 
 export function PasteAnalyzer() {
   const [text, setText] = useState("");
@@ -20,6 +21,8 @@ export function PasteAnalyzer() {
   const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
+  // Full contents of a loaded file; the textarea only shows a preview of large files.
+  const fileText = useRef<string | null>(null);
 
   const run = (raw: string, repoName = name) => {
     const commits = parseLog(raw);
@@ -39,19 +42,28 @@ export function PasteAnalyzer() {
       setError("That file is over 200 MB. Try a shorter history, e.g. add --since=5.years to the command.");
       return;
     }
-    file.text().then((s) => {
-      setText(s.length > 20000 ? s.slice(0, 20000) + "\n… (file loaded, preview truncated)" : s);
-      // Use the file name as the report name unless one was typed (or it's the default history.txt).
-      const repoName = name || (file.name !== "history.txt" ? file.name.replace(/\.(txt|log)$/, "") : "");
-      if (repoName !== name) setName(repoName);
-      run(s, repoName);
-    });
+    file.text().then(
+      (s) => {
+        fileText.current = s;
+        setText(s.length > PREVIEW_CHARS ? s.slice(0, PREVIEW_CHARS) + "\n… (file loaded, preview truncated)" : s);
+        // Use the file name as the report name unless one was typed (or it's the default history.txt).
+        const repoName = name || (file.name !== "history.txt" ? file.name.replace(/\.(txt|log)$/, "") : "");
+        if (repoName !== name) setName(repoName);
+        run(s, repoName);
+      },
+      () => setError("That file couldn't be read. Try choosing it again, or paste its contents instead."),
+    );
   };
 
   const onDrop = (e: DragEvent) => {
     e.preventDefault();
     setDragging(false);
     readFile(e.dataTransfer.files[0]);
+  };
+
+  const onDragLeave = (e: DragEvent) => {
+    // Moving onto the textarea inside the drop zone also fires dragleave; ignore it.
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false);
   };
 
   const copy = async () => {
@@ -64,12 +76,12 @@ export function PasteAnalyzer() {
 
   return (
     <div className="space-y-10">
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="space-y-5">
           <div>
             <p className="text-sm font-medium">1. Run this inside your repository</p>
             <div className="mt-2 flex items-stretch gap-2">
-              <code className="min-w-0 flex-1 overflow-x-auto rounded-lg border border-border bg-surface-2 px-3 py-2.5 font-mono text-[13px] whitespace-nowrap">
+              <code className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2.5 font-mono text-[13px] [overflow-wrap:anywhere]">
                 {LOG_COMMAND}
               </code>
               <Button variant="outline" onClick={copy} aria-label="Copy command">
@@ -87,7 +99,7 @@ export function PasteAnalyzer() {
                 e.preventDefault();
                 setDragging(true);
               }}
-              onDragLeave={() => setDragging(false)}
+              onDragLeave={onDragLeave}
               onDrop={onDrop}
               className={cn(
                 "mt-2 rounded-xl border-2 border-dashed p-1 transition-colors",
@@ -100,7 +112,10 @@ export function PasteAnalyzer() {
               <textarea
                 id="paste-log"
                 value={text}
-                onChange={(e) => setText(e.target.value)}
+                onChange={(e) => {
+                  fileText.current = null;
+                  setText(e.target.value);
+                }}
                 rows={9}
                 spellCheck={false}
                 placeholder={"@@9a34acf0␟Ada Lovelace␟1789494746␟fix: handle empty body\n\nM\tlib/response.js"}
@@ -119,13 +134,23 @@ export function PasteAnalyzer() {
               placeholder="Repository name (optional)"
               className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm sm:w-64"
             />
-            <Button onClick={() => run(text)} disabled={!text.trim()}>
+            <Button onClick={() => run(fileText.current ?? text)} disabled={!text.trim()}>
               Analyze log
             </Button>
             <Button variant="outline" onClick={() => fileRef.current?.click()}>
               <FileUp aria-hidden /> Choose file
             </Button>
-            <input ref={fileRef} type="file" accept=".txt,.log,text/plain" hidden onChange={(e) => readFile(e.target.files?.[0])} />
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".txt,.log,text/plain"
+              hidden
+              onChange={(e) => {
+                readFile(e.target.files?.[0]);
+                // Clear the value so choosing the same file again still fires onChange.
+                e.target.value = "";
+              }}
+            />
           </div>
           {error && (
             <p role="alert" className="text-sm text-danger">

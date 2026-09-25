@@ -27,8 +27,10 @@ const columns = [
   {
     title: "Legal",
     links: [
-      { href: "/privacy", label: "Privacy" },
-      { href: "/terms", label: "Terms" },
+      { href: "/privacy", label: "Privacy policy" },
+      { href: "/terms", label: "Terms and conditions" },
+      { href: "/cookies", label: "Cookie policy" },
+      { href: "/accessibility", label: "Accessibility" },
     ],
   },
 ] as const;
@@ -65,7 +67,7 @@ export function SiteFooter() {
       <div className="border-t border-border">
         <Container className="flex flex-col gap-2 py-5 text-xs text-fg-subtle sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {new Date().getFullYear()} {site.name}
+            © {new Date().getFullYear()} {site.author} · {site.name} is open source under the MIT License
           </p>
           <p>Not affiliated with GitHub, GitLab or Codeberg. Repository names belong to their owners.</p>
         </Container>

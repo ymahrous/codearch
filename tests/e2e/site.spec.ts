@@ -107,10 +107,17 @@ test.describe("site chrome", () => {
     await expect(page.getByRole("heading", { level: 1, name: "How it works" })).toBeVisible();
     await expectNoHorizontalScroll(page);
 
-    await page.getByRole("contentinfo").getByRole("link", { name: "Privacy" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Privacy" })).toBeVisible();
-    await page.getByRole("contentinfo").getByRole("link", { name: "Terms" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Terms of use" })).toBeVisible();
+    const footer = page.getByRole("contentinfo");
+    for (const [link, heading] of [
+      ["Privacy policy", "Privacy policy"],
+      ["Terms and conditions", "Terms and conditions"],
+      ["Cookie policy", "Cookie policy"],
+      ["Accessibility", "Accessibility statement"],
+    ]) {
+      await footer.getByRole("link", { name: link, exact: true }).click();
+      await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
+      await expect(page.getByText("Last updated September 25, 2026")).toBeVisible();
+    }
   });
 
   test("skip link moves focus to the main content", async ({ page, isMobile }) => {
@@ -139,12 +146,80 @@ test.describe("site chrome", () => {
   });
 });
 
+test.describe("cookie banner", () => {
+  test.use({ consent: null });
+
+  // Vercel serves the analytics script only in deployments; answer it here and record requests.
+  async function trackAnalytics(page: import("@playwright/test").Page) {
+    const requests: string[] = [];
+    await page.route("**/_vercel/insights/**", (route) => {
+      requests.push(route.request().url());
+      return route.fulfill({ status: 200, contentType: "text/javascript", body: "" });
+    });
+    return requests;
+  }
+
+  test("loads analytics only after the visitor allows it", async ({ page, consoleErrors }) => {
+    const requests = await trackAnalytics(page);
+    await page.goto("/");
+    const banner = page.getByRole("region", { name: "Cookies and analytics" });
+    await expect(banner).toBeVisible();
+    expect(requests).toEqual([]);
+
+    await banner.getByRole("button", { name: "Allow analytics" }).click();
+    await expect(banner).toBeHidden();
+    await expect.poll(() => requests.length).toBeGreaterThan(0);
+    void consoleErrors;
+  });
+
+  test("remembers a refusal, and the choice can be changed later", async ({ page, consoleErrors }) => {
+    const requests = await trackAnalytics(page);
+    await page.goto("/");
+    await page.getByRole("region", { name: "Cookies and analytics" }).getByRole("button", { name: "Decline" }).click();
+    await page.reload();
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByRole("region", { name: "Cookies and analytics" })).toBeHidden();
+    expect(requests).toEqual([]);
+
+    await page.goto("/cookies");
+    const toggle = page.getByRole("switch", { name: "Allow Vercel Web Analytics" });
+    await expect(toggle).toHaveAttribute("aria-checked", "false");
+    await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-checked", "true");
+    await expect.poll(() => requests.length).toBeGreaterThan(0);
+    void consoleErrors;
+  });
+
+  test("can be answered with the keyboard, without hiding what has focus", async ({ page, isMobile }) => {
+    test.skip(isMobile, "keyboard navigation");
+    await page.goto("/");
+    const banner = page.getByRole("region", { name: "Cookies and analytics" });
+    await expect(banner).toBeVisible();
+    // Tabbing through the page never leaves focus hidden behind the banner.
+    const box = (await banner.boundingBox())!;
+    for (let i = 0; i < 25; i++) {
+      await page.keyboard.press("Tab");
+      const focused = await page.evaluate(() => {
+        const r = document.activeElement!.getBoundingClientRect();
+        return { top: r.top, bottom: r.bottom, inBanner: !!document.activeElement!.closest("section[aria-labelledby=consent-title]") };
+      });
+      if (!focused.inBanner) expect(focused.top, "focused element is hidden behind the banner").toBeLessThan(box.y);
+    }
+    await banner.getByRole("button", { name: "Decline" }).focus();
+    await page.keyboard.press("Enter");
+    await expect(banner).toBeHidden();
+  });
+});
+
 test.describe("web standards", () => {
   test("serves robots, sitemap, manifest and icons", async ({ request }) => {
     const robots = await (await request.get("/robots.txt")).text();
     expect(robots).toContain("Disallow: /api/");
     expect(robots).toContain("Sitemap:");
-    expect(await (await request.get("/sitemap.xml")).text()).toContain("/expressjs/express");
+    const sitemap = await (await request.get("/sitemap.xml")).text();
+    expect(sitemap).toContain("/expressjs/express");
+    expect(sitemap).toContain("/accessibility");
+    expect(sitemap).toContain("/cookies");
     expect((await request.get("/manifest.webmanifest")).headers()["content-type"]).toContain("manifest+json");
     expect((await request.get("/opengraph-image")).headers()["content-type"]).toBe("image/png");
     expect((await request.get("/icon.svg")).ok()).toBe(true);

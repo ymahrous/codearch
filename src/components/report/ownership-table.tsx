@@ -139,7 +139,7 @@ export function OwnershipTable({ report }: { report: Report }) {
             {!rows.length && (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-fg-muted">
-                  No folders match “{query}”.
+                  {query.trim() ? `No folders match “${query.trim()}”.` : "No folder activity to show."}
                 </td>
               </tr>
             )}

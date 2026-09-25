@@ -1,6 +1,5 @@
 import type { Commit } from "./types";
 
-/** The command users run locally for paste mode. */
 /**
  * The command users run locally for paste mode. Fields are separated by the ASCII
  * unit separator (%x1f) so author names and subjects may contain "|".

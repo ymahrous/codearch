@@ -69,6 +69,20 @@ describe("readRemoteHistory against a real git server", () => {
     await expect(readRemoteHistory(repo.url, { fetch: slow, timeoutMs: 5 })).rejects.toMatchObject({ code: "timeout" });
   });
 
+  it("reports a timeout that fires while a response body is still downloading", async () => {
+    // Headers arrive at once, but the body only fails when the request's signal aborts.
+    const stalled = async (_url: string, init?: RequestInit) =>
+      new Response(
+        new ReadableStream({
+          start(ctrl) {
+            init?.signal?.addEventListener("abort", () => ctrl.error(init.signal!.reason));
+          },
+        }),
+        { status: 200 },
+      );
+    await expect(readRemoteHistory(repo.url, { fetch: stalled, timeoutMs: 20 })).rejects.toMatchObject({ code: "timeout" });
+  });
+
   it("rejects servers without protocol v2 or partial clone support", async () => {
     const v0 = async () => new Response("001e# service=git-upload-pack\n0000", { status: 200 });
     await expect(readRemoteHistory(repo.url, { fetch: v0 })).rejects.toMatchObject({ code: "unsupported" });

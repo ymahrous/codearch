@@ -12,7 +12,7 @@
   --border-strong: #d3cfc6;
   --fg: #1c1b19;
   --fg-muted: #6b675e;
-  --fg-subtle: #8f8a80;
+  --fg-subtle: #716d64;
   --accent: #b45309;
   --accent-hover: #92400e;
   --accent-fg: #ffffff;
@@ -47,7 +47,7 @@
   --border-strong: #3a3834;
   --fg: #edebe6;
   --fg-muted: #a39f95;
-  --fg-subtle: #7d796f;
+  --fg-subtle: #8a867c;
   --accent: #f59e0b;
   --accent-hover: #fbbf24;
   --accent-fg: #1c1408;
@@ -102,7 +102,13 @@
     -webkit-text-size-adjust: 100%;
     scroll-padding-top: 5rem;
   }
+  /* Report pages add a second sticky bar under the header; keep focused items clear of both. */
+  html:has(#report-sections) {
+    scroll-padding-top: 8rem;
+  }
   body {
+    /* While the cookie banner is open, the end of the page can scroll clear of it. */
+    padding-bottom: var(--consent-banner-height, 0px);
     background: var(--bg);
     color: var(--fg);
     font-family: var(--font-sans);
@@ -142,6 +148,14 @@
   }
   .dark .sediment::after {
     background: repeating-linear-gradient(172deg, transparent 0 5px, rgb(0 0 0 / 0.18) 5px 6px);
+  }
+}
+
+/* Entrance for the cookie banner. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
   }
 }
 

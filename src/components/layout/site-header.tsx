@@ -34,6 +34,16 @@ export function SiteHeader() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpenOn(null);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  // Links to the current page or a hash on it don't change the pathname, so close explicitly.
+  const close = () => setOpenOn(null);
+
   const isActive = (href: string) => !href.includes("#") && pathname === href;
 
   return (
@@ -95,11 +105,17 @@ export function SiteHeader() {
         <nav id="mobile-nav" aria-label="Mobile" className="border-t border-border bg-bg md:hidden">
           <Container className="flex flex-col gap-1 py-3">
             {nav.map((item) => (
-              <Link key={item.href} href={item.href} className="rounded-md px-3 py-2.5 text-fg hover:bg-surface-2">
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={close}
+                aria-current={isActive(item.href) ? "page" : undefined}
+                className="rounded-md px-3 py-2.5 text-fg hover:bg-surface-2"
+              >
                 {item.label}
               </Link>
             ))}
-            <ButtonLink href="/#analyze" className="mt-2">
+            <ButtonLink href="/#analyze" onClick={close} className="mt-2">
               Analyze a repo
             </ButtonLink>
           </Container>

@@ -1,14 +1,24 @@
+const repoUrl = (process.env.NEXT_PUBLIC_REPO_URL || "https://github.com/your-org/codearch").replace(/\/+$/, "");
+
 export const site = {
   name: "Codebase Archaeology",
   shortName: "Archaeology",
   tagline: "Every repository is a dig site.",
+  author: "Yousef Mahrous",
   description:
     "Explore any public git repository's history: commit activity as rock layers, the eras each maintainer led, who owns every folder, and the oldest files still standing.",
-  repoUrl: process.env.NEXT_PUBLIC_REPO_URL || "https://github.com/your-org/codebase-archaeology",
+  repoUrl,
+  /** Where visitors send questions and privacy, accessibility or legal requests. */
+  contactUrl: `${repoUrl}/issues`,
+  /** GitHub's private vulnerability reporting form for the repository. */
+  securityUrl: `${repoUrl}/security/advisories/new`,
   url:
     process.env.NEXT_PUBLIC_SITE_URL ||
     (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000"),
 };
+
+/** When the privacy policy, terms, cookie policy and accessibility statement last changed (YYYY-MM-DD). */
+export const LEGAL_UPDATED = "2026-09-25";
 
 export const nav = [
   { href: "/#examples", label: "Examples" },

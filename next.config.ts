@@ -3,10 +3,11 @@ import type { NextConfig } from "next";
 const isDev = process.env.NODE_ENV !== "production";
 
 // Next.js injects small inline scripts for hydration, so script-src needs 'unsafe-inline'
-// unless you add nonces via a proxy. Everything else is locked to this origin.
+// unless you add nonces via a proxy. Everything else is locked to this origin: in production
+// Vercel Web Analytics is served from this domain too; in development it loads a debug script.
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval' https://va.vercel-scripts.com" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self'",

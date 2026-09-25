@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -29,6 +29,19 @@ describe("SiteHeader", () => {
     await userEvent.click(screen.getByRole("button", { name: "Close menu" }));
     expect(screen.queryByRole("navigation", { name: "Mobile" })).not.toBeInTheDocument();
   });
+
+  it("closes the mobile menu on Escape and when a link to the current page is chosen", async () => {
+    render(<SiteHeader />);
+    await userEvent.click(screen.getByRole("button", { name: "Open menu" }));
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("navigation", { name: "Mobile" })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Open menu" }));
+    const mobile = screen.getByRole("navigation", { name: "Mobile" });
+    // The pathname is mocked, so it never changes: only an explicit close hides the menu.
+    await userEvent.click(within(mobile).getByRole("link", { name: "How it works" }));
+    expect(screen.queryByRole("navigation", { name: "Mobile" })).not.toBeInTheDocument();
+  });
 });
 
 describe("ThemeToggle", () => {
@@ -49,8 +62,10 @@ describe("ThemeToggle", () => {
 describe("SiteFooter", () => {
   it("links to legal pages and examples", () => {
     render(<SiteFooter />);
-    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/privacy");
-    expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/terms");
+    expect(screen.getByRole("link", { name: "Privacy policy" })).toHaveAttribute("href", "/privacy");
+    expect(screen.getByRole("link", { name: "Terms and conditions" })).toHaveAttribute("href", "/terms");
+    expect(screen.getByRole("link", { name: "Cookie policy" })).toHaveAttribute("href", "/cookies");
+    expect(screen.getByRole("link", { name: "Accessibility" })).toHaveAttribute("href", "/accessibility");
     expect(screen.getByRole("link", { name: "expressjs/express" })).toHaveAttribute("href", "/expressjs/express");
     expect(screen.getByRole("contentinfo")).toHaveTextContent(/Not affiliated with GitHub/);
   });

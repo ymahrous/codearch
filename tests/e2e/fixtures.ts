@@ -18,7 +18,16 @@ export async function expectNoHorizontalScroll(page: Page) {
   expect(overflow, "page is wider than the viewport").toBeLessThanOrEqual(0);
 }
 
-export const test = base.extend<{ consoleErrors: string[] }>({
+export const test = base.extend<{ consoleErrors: string[]; consent: "granted" | "denied" | null }>({
+  // Most tests start with analytics declined so the cookie banner doesn't cover the page.
+  // `test.use({ consent: null })` shows the banner.
+  consent: ["denied", { option: true }],
+  page: async ({ page, consent }, provide) => {
+    if (consent) {
+      await page.addInitScript((value) => localStorage.setItem("analytics-consent", JSON.stringify({ value, at: Date.now() })), consent);
+    }
+    await provide(page);
+  },
   consoleErrors: async ({ page }, provide) => {
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));

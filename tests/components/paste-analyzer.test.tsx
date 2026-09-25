@@ -36,6 +36,25 @@ describe("PasteAnalyzer", () => {
     expect(await screen.findByRole("heading", { level: 1, name: "my-service" })).toBeInTheDocument();
   });
 
+  it("re-analyzes the whole file, not the truncated preview, of a large upload", async () => {
+    // Pad the log past the preview limit so the only README.md commit falls outside the preview.
+    const filler = Array.from(
+      { length: 400 },
+      (_, i) => `@@f${i}${US}Grace Hopper${US}${1600000000 + i}${US}${"x".repeat(60)}\n\nM\tsrc/app.ts`,
+    );
+    const big = [...filler, LOG].join("\n");
+    const { container } = render(<PasteAnalyzer />);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    await userEvent.upload(input, new File([big], "big.txt", { type: "text/plain" }));
+    await screen.findByRole("heading", { level: 1, name: "big" });
+    expect((screen.getByLabelText("Git log output") as HTMLTextAreaElement).value).toMatch(/preview truncated/);
+    const commitsBefore = screen.getByText("Commits", { selector: "dt" }).nextElementSibling?.textContent;
+    await userEvent.click(screen.getByRole("button", { name: "Analyze log" }));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByText("Commits", { selector: "dt" }).nextElementSibling?.textContent).toBe(commitsBefore);
+    expect(commitsBefore).toBe("402");
+  });
+
   it("explains what's wrong with unusable input", async () => {
     render(<PasteAnalyzer />);
     fireEvent.change(screen.getByLabelText("Git log output"), { target: { value: "just some text" } });

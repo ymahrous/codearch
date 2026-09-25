@@ -7,7 +7,13 @@ export const contentType = "image/png";
 
 export default async function Image({ params }: { params: Promise<{ owner: string; repo: string }> }) {
   const { owner, repo } = await params;
-  const slug = decodeURIComponent(`${owner}/${repo}`).slice(0, 80);
+  let slug = `${owner}/${repo}`;
+  try {
+    slug = decodeURIComponent(slug);
+  } catch {
+    // Malformed escape: show the raw path.
+  }
+  slug = slug.slice(0, 80);
   return new ImageResponse(
     <OgCard title={slug} mono subtitle="Commit history as rock layers: eras, ownership, bus factor and the oldest surviving files." />,
     size,
