@@ -1,0 +1,157 @@
+@import "tailwindcss";
+
+/* Dark mode follows a `.dark` class on <html>, set before paint by the theme script. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --bg: #fafaf9;
+  --surface: #ffffff;
+  --surface-2: #f4f3f0;
+  --surface-3: #ebe9e4;
+  --border: #e5e2dc;
+  --border-strong: #d3cfc6;
+  --fg: #1c1b19;
+  --fg-muted: #6b675e;
+  --fg-subtle: #8f8a80;
+  --accent: #b45309;
+  --accent-hover: #92400e;
+  --accent-fg: #ffffff;
+  --accent-soft: #fdf3e4;
+  --ring: #d97706;
+  --success: #2f7a47;
+  --success-soft: #e9f5ec;
+  --warning: #9a6a0b;
+  --warning-soft: #fdf5e1;
+  --danger: #b4382a;
+  --danger-soft: #fcecea;
+
+  /* Strata palette: one hue per principal contributor, "everyone else" last. */
+  --s0: #c68a2e;
+  --s1: #4f7196;
+  --s2: #6f8d4f;
+  --s3: #a95a44;
+  --s4: #b88a9a;
+  --s5: #5d5b56;
+  --s6: #7fa39b;
+  --s7: #cfae6c;
+  --sx: #bdb9b0;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #0f0f0e;
+  --surface: #161614;
+  --surface-2: #1d1c1a;
+  --surface-3: #262522;
+  --border: #2a2926;
+  --border-strong: #3a3834;
+  --fg: #edebe6;
+  --fg-muted: #a39f95;
+  --fg-subtle: #7d796f;
+  --accent: #f59e0b;
+  --accent-hover: #fbbf24;
+  --accent-fg: #1c1408;
+  --accent-soft: #2b2112;
+  --ring: #f59e0b;
+  --success: #6fbf86;
+  --success-soft: #16261b;
+  --warning: #e3b04b;
+  --warning-soft: #2a2213;
+  --danger: #ec8a7c;
+  --danger-soft: #2d1916;
+
+  --s0: #d49a3c;
+  --s1: #6f94bd;
+  --s2: #8bab69;
+  --s3: #c7735b;
+  --s4: #c9a0ae;
+  --s5: #8d8a83;
+  --s6: #93b8af;
+  --s7: #dcc07f;
+  --sx: #4a4843;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: 5rem;
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    letter-spacing: -0.02em;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--accent) 25%, transparent);
+  }
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  /* Faint sediment texture on strata bands. */
+  .sediment::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(172deg, transparent 0 5px, rgb(0 0 0 / 0.07) 5px 6px);
+    mix-blend-mode: multiply;
+  }
+  .dark .sediment::after {
+    background: repeating-linear-gradient(172deg, transparent 0 5px, rgb(0 0 0 / 0.18) 5px 6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
