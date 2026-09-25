@@ -148,4 +148,4 @@ disclosure.
 
 ## License
 
-Codebase Archaeology is released under the [MIT License](LICENSE). Copyright © 2026 Yousef Mahrous.
+Codebase Archaeology is released under the [MIT License](LICENSE).
