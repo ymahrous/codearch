@@ -13,6 +13,7 @@ export function ProsePage({
   title,
   intro,
   updated,
+  author,
   toc,
   children,
 }: {
@@ -21,6 +22,8 @@ export function ProsePage({
   intro?: ReactNode;
   /** Last-updated date as YYYY-MM-DD. */
   updated?: string;
+  /** Shown as a byline next to the date. */
+  author?: string;
   /** Links to the page's sections, shown under the header. Each id must match an h2 on the page. */
   toc?: readonly TocItem[];
   children: ReactNode;
@@ -32,9 +35,15 @@ export function ProsePage({
           {eyebrow && <p className="text-sm font-medium text-accent">{eyebrow}</p>}
           <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
           {intro && <p className="mt-4 text-lg text-fg-muted">{intro}</p>}
-          {updated && (
+          {(updated || author) && (
             <p className="mt-4 text-sm text-fg-subtle">
-              Last updated <time dateTime={updated}>{formatDay(updated)}</time>
+              {author && <>By {author}</>}
+              {author && updated && " · "}
+              {updated && (
+                <>
+                  Last updated <time dateTime={updated}>{formatDay(updated)}</time>
+                </>
+              )}
             </p>
           )}
         </header>

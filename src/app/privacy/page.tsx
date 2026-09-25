@@ -1,13 +1,13 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { ProsePage, ProseTable } from "@/components/ui/prose";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbNode, graph, pageMetadata, webPageNode } from "@/lib/seo";
 import { LEGAL_UPDATED, site } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Privacy policy",
-  description: `What personal data ${site.name} processes, why, for how long, and the rights you have.`,
-  alternates: { canonical: "/privacy" },
-};
+const title = "Privacy policy";
+const description = `How ${site.name} handles personal data: what it processes when you analyze a repository, why, how long it's kept, and the privacy rights you have.`;
+
+export const metadata = pageMetadata({ title, description, path: "/privacy" });
 
 const sections = [
   { id: "who-we-are", label: "Who we are" },
@@ -28,11 +28,20 @@ export default function PrivacyPage() {
   return (
     <ProsePage
       eyebrow="Legal"
-      title="Privacy policy"
+      title={title}
       updated={LEGAL_UPDATED}
       intro="What personal data Codebase Archaeology processes when you use it, why, for how long, and the choices you have."
       toc={sections}
     >
+      <JsonLd
+        data={graph(
+          webPageNode({ path: "/privacy", title, description, dateModified: LEGAL_UPDATED }),
+          breadcrumbNode([
+            ["Home", "/"],
+            [title, "/privacy"],
+          ]),
+        )}
+      />
       <div className="rounded-xl border border-border bg-surface p-5">
         <p className="font-semibold text-fg">At a glance</p>
         <ul className="mt-2">

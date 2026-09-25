@@ -2,7 +2,18 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, expectNoHorizontalScroll, mockDig, test } from "./fixtures";
 import type { Page } from "@playwright/test";
 
-const PAGES = ["/", "/expressjs/express", "/analyze", "/how-it-works", "/privacy", "/terms", "/cookies", "/accessibility", "/no/such/page"];
+const PAGES = [
+  "/",
+  "/expressjs/express",
+  "/analyze",
+  "/how-it-works",
+  "/about",
+  "/privacy",
+  "/terms",
+  "/cookies",
+  "/accessibility",
+  "/no/such/page",
+];
 
 async function open(page: Page, path: string) {
   await mockDig(page);

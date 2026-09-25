@@ -1,14 +1,14 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { ProsePage } from "@/components/ui/prose";
 import { formatDay } from "@/lib/format";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbNode, graph, pageMetadata, webPageNode } from "@/lib/seo";
 import { LEGAL_UPDATED, site } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Accessibility statement",
-  description: `How ${site.name} works to be accessible to everyone, its conformance with WCAG 2.2, known limitations and how to report a problem.`,
-  alternates: { canonical: "/accessibility" },
-};
+const title = "Accessibility statement";
+const description = `How ${site.name} works to be accessible to everyone, its conformance with WCAG 2.2, known limitations and how to report a problem.`;
+
+export const metadata = pageMetadata({ title, description, path: "/accessibility" });
 
 const sections = [
   { id: "commitment", label: "Our commitment" },
@@ -26,11 +26,20 @@ export default function AccessibilityPage() {
   return (
     <ProsePage
       eyebrow="Legal"
-      title="Accessibility statement"
+      title={title}
       updated={LEGAL_UPDATED}
       intro="We want everyone to be able to explore a codebase's history, whatever device, browser or assistive technology they use."
       toc={sections}
     >
+      <JsonLd
+        data={graph(
+          webPageNode({ path: "/accessibility", title, description, dateModified: LEGAL_UPDATED }),
+          breadcrumbNode([
+            ["Home", "/"],
+            [title, "/accessibility"],
+          ]),
+        )}
+      />
       <h2 id="commitment">1. Our commitment</h2>
       <p>
         {site.name} aims to be usable by people who rely on screen readers, screen magnifiers, voice control, keyboard-only navigation or

@@ -1,15 +1,15 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { ConsentControls } from "@/components/consent/consent-controls";
 import { ProsePage, ProseTable } from "@/components/ui/prose";
 import { CONSENT_KEY } from "@/lib/consent";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbNode, graph, pageMetadata, webPageNode } from "@/lib/seo";
 import { LEGAL_UPDATED, site } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Cookie policy",
-  description: `What ${site.name} stores in your browser, the cookieless analytics it uses with your consent, and how to change your choice.`,
-  alternates: { canonical: "/cookies" },
-};
+const title = "Cookie policy";
+const description = `What ${site.name} stores in your browser, the cookieless analytics it uses with your consent, and how to change your choice.`;
+
+export const metadata = pageMetadata({ title, description, path: "/cookies" });
 
 const sections = [
   { id: "summary", label: "Summary" },
@@ -25,11 +25,20 @@ export default function CookiesPage() {
   return (
     <ProsePage
       eyebrow="Legal"
-      title="Cookie policy"
+      title={title}
       updated={LEGAL_UPDATED}
       intro="What we store in your browser, the analytics we use with your permission, and how to change your choice at any time."
       toc={sections}
     >
+      <JsonLd
+        data={graph(
+          webPageNode({ path: "/cookies", title, description, dateModified: LEGAL_UPDATED }),
+          breadcrumbNode([
+            ["Home", "/"],
+            [title, "/cookies"],
+          ]),
+        )}
+      />
       <h2 id="summary">1. Summary</h2>
       <p>
         {site.name} doesn&apos;t use advertising or tracking cookies, and the site itself sets no cookies at all. It saves two small

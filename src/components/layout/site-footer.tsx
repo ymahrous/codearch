@@ -20,6 +20,7 @@ const columns = [
     title: "Resources",
     links: [
       { href: "/how-it-works", label: "How it works" },
+      { href: "/about", label: "About" },
       { href: "/how-it-works#api", label: "API" },
       { href: site.repoUrl, label: "Source code", external: true },
     ],

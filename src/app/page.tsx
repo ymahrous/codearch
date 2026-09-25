@@ -1,15 +1,25 @@
 import { ArrowRight, Clock, FileSearch, GitBranch, Layers, Lock, ShieldAlert, Users } from "lucide-react";
 import Link from "next/link";
 import { StrataChart } from "@/components/report/strata-chart";
+import { JsonLd } from "@/components/seo/json-ld";
 import { RepoSearch } from "@/components/search/repo-search";
 import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import type { DigResponse } from "@/lib/archaeology/types";
+import { HOME_FAQ } from "@/lib/content";
 import { formatNumber } from "@/lib/format";
-import { EXAMPLES } from "@/lib/site";
+import { appNode, faqNode, graph, ids, pageMetadata, webPageNode } from "@/lib/seo";
+import { EXAMPLES, site } from "@/lib/site";
 import example from "@/data/example-report.json";
 
 const sample = example as unknown as DigResponse;
+
+const title = `${site.name} · Explore any repository's history`;
+
+export const metadata = {
+  ...pageMetadata({ title, description: site.description, path: "/", socialTitle: site.name }),
+  title: { absolute: title },
+};
 
 const features = [
   { icon: Layers, title: "Rock layers", body: "Every year of commits drawn as a layer of sediment, colored by who laid it down." },
@@ -36,6 +46,13 @@ export default function HomePage() {
   const r = sample.report;
   return (
     <>
+      <JsonLd
+        data={graph(
+          appNode(),
+          webPageNode({ path: "/", title, description: site.description, about: { "@id": ids.app } }),
+          faqNode("/", HOME_FAQ),
+        )}
+      />
       <section className="relative overflow-hidden border-b border-border">
         <Container className="grid grid-cols-1 items-center gap-12 py-16 sm:py-20 lg:grid-cols-[1.1fr_1fr] lg:py-24">
           <div id="analyze" className="min-w-0 scroll-mt-24">
@@ -152,6 +169,22 @@ export default function HomePage() {
               </li>
             ))}
           </ul>
+        </Container>
+      </section>
+
+      <section aria-labelledby="faq-title" className="border-t border-border py-20">
+        <Container>
+          <h2 id="faq-title" className="text-3xl font-semibold tracking-tight">
+            Frequently asked questions
+          </h2>
+          <div className="mt-10 grid gap-x-12 gap-y-8 md:grid-cols-2">
+            {HOME_FAQ.map((qa) => (
+              <div key={qa.question}>
+                <h3 className="font-semibold">{qa.question}</h3>
+                <p className="mt-2 text-sm text-fg-muted">{qa.answer}</p>
+              </div>
+            ))}
+          </div>
         </Container>
       </section>
 

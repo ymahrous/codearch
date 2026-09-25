@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RepoReport } from "@/components/report/repo-report";
+import type { DigResponse } from "@/lib/archaeology/types";
 import example from "@/data/example-report.json";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -14,6 +15,16 @@ describe("RepoReport", () => {
     expect(screen.getByText(/Finding the repository/)).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Rock layers" })).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith("/api/dig?repo=expressjs%2Fexpress", expect.anything());
+  });
+
+  it("shows a report the server already had without requesting it again, and can still re-analyze", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json(example));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<RepoReport repoInput="expressjs/express" slug="expressjs/express" initial={example as unknown as DigResponse} />);
+    expect(screen.getByRole("heading", { name: "Rock layers" })).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "Re-analyze" }));
+    expect(fetchMock).toHaveBeenCalledWith("/api/dig?repo=expressjs%2Fexpress&refresh=1", expect.anything());
   });
 
   it("shows API errors and retries", async () => {

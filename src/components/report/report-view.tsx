@@ -1,10 +1,11 @@
 "use client";
 
 import { Check, ExternalLink, Link2, RefreshCw, Star } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { reportFaq, reportSummary, riskFolders as singleOwnerFolders } from "@/lib/archaeology/summary";
 import type { FossilRow, RepoMeta, Report } from "@/lib/archaeology/types";
 import {
   formatAgo,
@@ -26,6 +27,7 @@ const SECTIONS = [
   { id: "ownership", label: "Ownership" },
   { id: "fossils", label: "Fossils" },
   { id: "insights", label: "Insights" },
+  { id: "questions", label: "Q&A" },
 ] as const;
 
 export interface ReportViewProps {
@@ -41,7 +43,9 @@ export function ReportView({ report, meta, cached, onRefresh, refreshing }: Repo
   const [copied, setCopied] = useState(false);
   const r = report;
 
-  const riskFolders = useMemo(() => r.territory["1|nobots"].filter((t) => t.busFactor === 1 && t.authors > 1).length, [r]);
+  const riskFolders = singleOwnerFolders(r).length;
+  // Questions and answers are published for public repositories only, never for pasted logs.
+  const faq = r.source === "git" ? reportFaq(r) : [];
   const activeYears = r.years.filter((y) => y.commits > 0).length;
 
   const copyLink = async () => {
@@ -61,10 +65,14 @@ export function ReportView({ report, meta, cached, onRefresh, refreshing }: Repo
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone={r.source === "git" ? "accent" : "neutral"}>{r.source === "git" ? "Public repository" : "From pasted log"}</Badge>
-            {r.source === "git" && <Badge>{cached ? `Analyzed ${formatAgo(r.generatedAt)}` : "Freshly analyzed"}</Badge>}
+            {r.source === "git" && (
+              // Relative time can differ by a minute between the server and the browser.
+              <Badge suppressHydrationWarning>{cached ? `Analyzed ${formatAgo(r.generatedAt)}` : "Freshly analyzed"}</Badge>
+            )}
           </div>
           <h1 className="mt-3 truncate font-mono text-2xl font-semibold tracking-tight sm:text-3xl">{r.name}</h1>
           {meta?.description && <p className="mt-2 max-w-2xl text-fg-muted">{meta.description}</p>}
+          <p className="mt-2 max-w-3xl text-fg">{reportSummary(r)}</p>
           <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-fg-muted">
             <span>
               {formatDate(r.stats.firstTs)} – {formatDate(r.stats.lastTs)}
@@ -142,7 +150,7 @@ export function ReportView({ report, meta, cached, onRefresh, refreshing }: Repo
         className="sticky top-16 z-20 -mx-4 border-b border-border bg-bg/90 px-4 backdrop-blur sm:mx-0 sm:px-0"
       >
         <ul className="flex gap-1 overflow-x-auto py-2">
-          {SECTIONS.map((s) => (
+          {SECTIONS.filter((s) => s.id !== "questions" || faq.length).map((s) => (
             <li key={s.id}>
               <a
                 href={`#${s.id}`}
@@ -259,6 +267,23 @@ export function ReportView({ report, meta, cached, onRefresh, refreshing }: Repo
           ))}
         </dl>
       </section>
+
+      {/* Questions */}
+      {faq.length > 0 && (
+        <section id="questions" aria-labelledby="questions-title" className="space-y-4">
+          <h2 id="questions-title" className="text-xl font-semibold">
+            Questions about {r.name}
+          </h2>
+          <div className="grid gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-2">
+            {faq.map((qa) => (
+              <div key={qa.question} className="bg-surface p-5">
+                <h3 className="font-semibold text-fg">{qa.question}</h3>
+                <p className="mt-1.5 text-sm break-words text-fg-muted">{qa.answer}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

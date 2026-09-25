@@ -69,15 +69,19 @@ export class RedisStore implements Store {
   }
 }
 
-let store: Store | undefined;
+// One store per server process. Next.js bundles route handlers and pages separately, each
+// with its own copy of this module, so the store lives on globalThis: that way a report the
+// API cached is also visible to the page that server-renders it.
+const shared = globalThis as typeof globalThis & { __archaeologyStore?: Store };
+
 export function getStore(): Store {
-  if (store) return store;
+  if (shared.__archaeologyStore) return shared.__archaeologyStore;
   const { redis, cacheEntries } = config();
-  store = redis ? new RedisStore(new Redis(redis)) : new MemoryStore(cacheEntries + 5000);
-  return store;
+  shared.__archaeologyStore = redis ? new RedisStore(new Redis(redis)) : new MemoryStore(cacheEntries + 5000);
+  return shared.__archaeologyStore;
 }
 
 /** For tests. */
 export function setStore(s: Store | undefined) {
-  store = s;
+  shared.__archaeologyStore = s;
 }

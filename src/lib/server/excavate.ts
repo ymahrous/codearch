@@ -17,15 +17,19 @@ const inflight = new Map<string, Promise<Cached>>();
 
 export const cacheKey = (host: string, slug: string) => `report:v1:${host}/${slug}`.toLowerCase();
 
-export async function isCached(input: string): Promise<boolean> {
+/** The cached report for a repository, if there is one. Never starts an analysis. */
+export async function cachedDig(input: string): Promise<DigResponse | null> {
   const t = parseRepoInput(input);
-  if (!t) return false;
+  if (!t) return null;
   try {
-    return !!(await getStore().get<Cached>(cacheKey(t.host, t.slug)));
+    const hit = await getStore().get<Cached>(cacheKey(t.host, t.slug));
+    return hit ? { ...hit, cached: true } : null;
   } catch {
-    return false;
+    return null;
   }
 }
+
+export const isCached = async (input: string) => !!(await cachedDig(input));
 
 export interface ExcavateOptions {
   refresh?: boolean;

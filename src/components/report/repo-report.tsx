@@ -21,12 +21,14 @@ async function fetchReport(repoInput: string, refresh: boolean, signal: AbortSig
 }
 
 /** Loads a repository report from the API and renders progress, errors and the result. */
-export function RepoReport({ repoInput, slug }: { repoInput: string; slug: string }) {
-  const [state, setState] = useState<State>({ status: "loading" });
+export function RepoReport({ repoInput, slug, initial }: { repoInput: string; slug: string; initial?: DigResponse }) {
+  // A report the server already had in its cache is shown straight away, without a request.
+  const [state, setState] = useState<State>(initial ? { status: "ready", data: initial, refreshing: false } : { status: "loading" });
   // Each request is identified by an attempt number; bumping it (re)starts a fetch.
   const [attempt, setAttempt] = useState({ n: 0, refresh: false });
 
   useEffect(() => {
+    if (initial && attempt.n === 0) return;
     const ctrl = new AbortController();
     fetchReport(repoInput, attempt.refresh, ctrl.signal).then(
       (data) => setState({ status: "ready", data, refreshing: false }),
@@ -40,7 +42,7 @@ export function RepoReport({ repoInput, slug }: { repoInput: string; slug: strin
       },
     );
     return () => ctrl.abort();
-  }, [repoInput, attempt]);
+  }, [repoInput, attempt, initial]);
 
   const retry = useCallback(() => {
     setState({ status: "loading" });

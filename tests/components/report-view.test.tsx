@@ -20,6 +20,20 @@ describe("ReportView", () => {
     expect(screen.getByText(/Analyzed/)).toBeInTheDocument();
   });
 
+  it("sums up the repository and answers common questions about it", () => {
+    render(<ReportView report={data.report} meta={data.meta} cached />);
+    expect(screen.getByText(/^expressjs\/express has 6,170 commits from 392 contributors/)).toBeInTheDocument();
+    const qa = screen.getByRole("region", { name: "Questions about expressjs/express" });
+    expect(within(qa).getByRole("heading", { name: "Who has made the most commits to expressjs/express?" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Report sections" })).toContainElement(screen.getByRole("link", { name: "Q&A" }));
+  });
+
+  it("doesn't publish Q&A for a pasted private log", () => {
+    render(<ReportView report={{ ...data.report, source: "paste" }} />);
+    expect(screen.queryByRole("region", { name: /Questions about/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Q&A" })).not.toBeInTheDocument();
+  });
+
   it("offers the chart as an accessible table", async () => {
     render(<ReportView report={data.report} />);
     expect(screen.getByRole("list", { name: /Commits per year/ })).toBeInTheDocument();

@@ -66,7 +66,7 @@ test.describe("report page", () => {
   test("has per-repository metadata", async ({ page }) => {
     await mockDig(page);
     await page.goto("/vuejs/core");
-    await expect(page).toHaveTitle("vuejs/core history · Codebase Archaeology");
+    await expect(page).toHaveTitle("vuejs/core git history · Codebase Archaeology");
     await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /\/vuejs\/core\/opengraph-image/);
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/vuejs\/core$/);
   });
@@ -220,9 +220,43 @@ test.describe("web standards", () => {
     expect(sitemap).toContain("/expressjs/express");
     expect(sitemap).toContain("/accessibility");
     expect(sitemap).toContain("/cookies");
+    expect(sitemap).toContain("/about");
     expect((await request.get("/manifest.webmanifest")).headers()["content-type"]).toContain("manifest+json");
     expect((await request.get("/opengraph-image")).headers()["content-type"]).toBe("image/png");
     expect((await request.get("/icon.svg")).ok()).toBe(true);
+  });
+
+  test("every page has its own canonical and social URL, and valid structured data", async ({ page }) => {
+    const expected: Record<string, string> = {
+      "/": "FAQPage",
+      "/how-it-works": "TechArticle",
+      "/analyze": "HowTo",
+      "/about": "AboutPage",
+      "/privacy": "WebPage",
+      "/terms": "WebPage",
+      "/cookies": "WebPage",
+      "/accessibility": "WebPage",
+    };
+    for (const [path, type] of Object.entries(expected)) {
+      await page.goto(path);
+      const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
+      expect(new URL(canonical!).pathname, path).toBe(path);
+      await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", canonical!);
+      await expect(page.locator('meta[property="og:image"]').first()).toHaveAttribute("content", /opengraph-image/);
+      const types = (await page.locator('script[type="application/ld+json"]').allTextContents()).flatMap((json) =>
+        (JSON.parse(json)["@graph"] as Array<{ "@type": string }>).map((n) => n["@type"]),
+      );
+      expect(types, path).toEqual(expect.arrayContaining(["WebSite", "Person", type]));
+    }
+  });
+
+  test("publishes llms.txt for AI assistants", async ({ request }) => {
+    const res = await request.get("/llms.txt");
+    expect(res.headers()["content-type"]).toContain("text/markdown");
+    const text = await res.text();
+    expect(text).toMatch(/^# Codebase Archaeology\n\n> /);
+    expect(text).toContain("/how-it-works");
+    expect(text).toContain("### What is a bus factor?");
   });
 
   test("sends security headers", async ({ request }) => {
@@ -240,10 +274,23 @@ test.describe("web standards", () => {
   });
 });
 
-test("live: analyzes a real repository @live", async ({ page }) => {
+test("live: analyzes a real repository, then serves it to crawlers as HTML @live", async ({ page, request, consoleErrors }) => {
   test.skip(!process.env.E2E_LIVE, "Set E2E_LIVE=1 to run against GitHub");
   test.setTimeout(120_000);
   await page.goto("/expressjs/express");
   await expect(page.getByRole("heading", { name: "Rock layers" })).toBeVisible({ timeout: 90_000 });
   await expect(page.getByText("TJ Holowaychuk").or(page.getByText("Tj Holowaychuk")).first()).toBeVisible();
+  // Now cached, the report is in the server's HTML, readable without JavaScript.
+  const html = await (await request.get("/expressjs/express")).text();
+  expect(html).toMatch(/expressjs\/express has [\d,]+ commits from [\d,]+ contributors/);
+  expect(html).toContain('"@type":"FAQPage"');
+  // In the browser it hydrates cleanly, without asking the API again.
+  const apiCalls: string[] = [];
+  page.on("request", (r) => r.url().includes("/api/dig") && apiCalls.push(r.url()));
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Questions about expressjs/express" })).toBeVisible();
+  await page.getByRole("button", { name: "Show as table" }).click();
+  await expect(page.getByRole("table", { name: "Commits per year" })).toBeVisible();
+  expect(apiCalls).toEqual([]);
+  void consoleErrors;
 });

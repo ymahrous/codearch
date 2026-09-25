@@ -1,13 +1,13 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { ProsePage } from "@/components/ui/prose";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbNode, graph, pageMetadata, webPageNode } from "@/lib/seo";
 import { LEGAL_UPDATED, site } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Terms and conditions",
-  description: `The terms and conditions for using ${site.name}.`,
-  alternates: { canonical: "/terms" },
-};
+const title = "Terms and conditions";
+const description = `The terms for using ${site.name} and its API: acceptable use, repository data, the accuracy of reports, and the service's disclaimers and liability.`;
+
+export const metadata = pageMetadata({ title, description, path: "/terms" });
 
 const sections = [
   { id: "agreement", label: "Agreement to these terms" },
@@ -32,11 +32,20 @@ export default function TermsPage() {
   return (
     <ProsePage
       eyebrow="Legal"
-      title="Terms and conditions"
+      title={title}
       updated={LEGAL_UPDATED}
       intro="The rules for using Codebase Archaeology. Please read them: by using the Service, you agree to them."
       toc={sections}
     >
+      <JsonLd
+        data={graph(
+          webPageNode({ path: "/terms", title, description, dateModified: LEGAL_UPDATED }),
+          breadcrumbNode([
+            ["Home", "/"],
+            [title, "/terms"],
+          ]),
+        )}
+      />
       <h2 id="agreement">1. Agreement to these terms</h2>
       <p>
         These terms and conditions (&ldquo;Terms&rdquo;) govern your use of {site.name}, including the website, its report pages and its API

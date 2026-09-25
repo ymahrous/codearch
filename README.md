@@ -144,7 +144,8 @@ Every variable is optional. See [`.env.example`](.env.example).
 3. Add **Upstash Redis** from the Vercel Marketplace (free tier) and connect it to the project.
    It sets `KV_REST_API_URL` / `KV_REST_API_TOKEN`, which the app picks up automatically. Without
    it, each function instance keeps its own cache and rate-limit counters, which reset whenever
-   the instance is recycled.
+   the instance is recycled. It's also what lets report pages be served to search engines and AI
+   crawlers as full HTML: a report cached by the API is only visible to the page through Redis.
 4. Enable **Web Analytics** under **Project → Analytics** and redeploy. The analytics script only
    loads for visitors who choose **Allow analytics** in the cookie banner.
 5. On GitHub, turn on **Issues** and **Private vulnerability reporting** (Settings → Security).
@@ -192,7 +193,8 @@ src/
     page.tsx                Home
     [owner]/[repo]/         Report page + per-repository Open Graph image
     analyze/                Paste mode
-    how-it-works/           Methodology
+    how-it-works/, about/   Methodology (question-and-answer headings) and about page
+    llms.txt/route.ts       Plain-markdown site guide for AI assistants (llmstxt.org)
     privacy/, terms/, cookies/, accessibility/   Legal pages and accessibility statement
     api/dig/route.ts        Report API
     api/health/route.ts     Health check
@@ -203,9 +205,13 @@ src/
     layout/                 Header, footer, logo, theme toggle
     report/                 Report view, strata chart, ownership table, loading/error states
     paste/, search/, ui/    Paste analyzer, repository search, design-system primitives
+    seo/json-ld.tsx         Safe JSON-LD structured-data renderer
   lib/
     git/                    pkt-line, packfile reader, tree diffs, smart-HTTP client
-    archaeology/            Log parser, analyzer, repository input parsing, types
+    archaeology/            Log parser, analyzer, repository input parsing, types,
+                            report summary and Q&A (summary.ts)
+    seo.ts                  Per-page metadata and schema.org structured data
+    content.ts              Home page FAQ and paste-mode steps (shared by page, schema and llms.txt)
     consent.ts              Analytics consent store (local storage, 12-month expiry, GPC)
     server/                 Config (zod), store (memory/Upstash), rate limit, GitHub lookup, excavate
 tests/
@@ -221,8 +227,16 @@ scripts/verify-remote.ts    Compare against the git CLI
   themes, reflow at 320px. axe-core checks every page in both themes in CI (`tests/e2e/a11y.spec.ts`).
 - **Privacy:** no cookies set by the app; analytics is opt-in, cookieless and withdrawable at any
   time on `/cookies`; paste mode never uploads data.
-- **SEO:** per-page titles and descriptions, canonical URLs, Open Graph and Twitter cards with
-  generated images, `sitemap.xml`, `robots.txt` (API disallowed), web app manifest and icons.
+- **SEO:** per-page titles (≤60 characters) and descriptions (≤160), canonical and Open Graph
+  URLs for every page, Open Graph and Twitter cards with generated images (one per report),
+  `sitemap.xml` with real modification dates, `robots.txt` (API disallowed), manifest and icons.
+- **GEO (AI search):** cached reports are server-rendered, so crawlers that don't run JavaScript
+  get the full report; schema.org JSON-LD on every page (WebSite, Person, WebApplication,
+  TechArticle, AboutPage, HowTo, BreadcrumbList, SoftwareSourceCode); an author byline and About
+  page; cited sources in the methodology; and [`/llms.txt`](src/app/llms.txt/route.ts).
+- **AEO (answer engines):** a one-sentence summary and a "Questions about owner/repo" section on
+  every public report, a home page FAQ, and question-phrased methodology headings, each published
+  as FAQPage or HowTo data built from the same text as the page.
 - **Security:** Content-Security-Policy, HSTS, `X-Frame-Options: DENY`, `nosniff`, strict
   referrer policy, Permissions-Policy, no `X-Powered-By`; strictly validated input;
   size- and time-limited downloads; per-IP rate limiting.
